@@ -1,20 +1,14 @@
 """Answer questions from the ingested PDFs, with citations."""
 import time
 
-import chromadb
-
 from src.db import log_qa
+from src.ingest import get_collection
 from src.llm import generate
-
-DB_DIR = "data/chroma_db"
-COLLECTION = "pdf_docs"
-
-_collection = chromadb.PersistentClient(path=DB_DIR).get_collection(COLLECTION)
 
 
 def retrieve(question, k=5):
     """Find the k chunks most similar to the question."""
-    result = _collection.query(query_texts=[question], n_results=k)
+    result = get_collection().query(query_texts=[question], n_results=k)
     return [
         {"text": doc, "source": meta["source"], "page": meta["page"]}
         for doc, meta in zip(result["documents"][0], result["metadatas"][0])
