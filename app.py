@@ -1,5 +1,6 @@
 """Streamlit UI for PDF Q&A."""
 import html
+import uuid
 
 import streamlit as st
 
@@ -19,6 +20,17 @@ def clean(text):
         .replace("*", "&#42;")
         .replace("$", "&#36;")
     )
+
+
+def page_label(pages):
+    """Turn '3-5' into 'Pages 3-5' and '1-1' into 'Page 1'."""
+    pages = pages.strip()
+    if not pages:
+        return ""
+    if "-" in pages:
+        a, b = [p.strip() for p in pages.split("-", 1)]
+        return f"Page {a}" if a == b else f"Pages {a}-{b}"
+    return f"Page {pages}"
 
 
 st.set_page_config(page_title="PDF Q&A Assistant", page_icon="📄", layout="wide")
@@ -85,9 +97,13 @@ st.markdown(
         font-size: .85rem; font-weight: 600; margin: 0 .35rem .35rem 0;
     }
 
+    .play-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem; margin-top: 1rem;
+    }
     .play-card {
         background: #fff; border-radius: 18px; border-top: 6px solid var(--c);
-        padding: 1.1rem 1.2rem; margin-bottom: 1rem; min-height: 230px;
+        padding: 1.1rem 1.2rem; min-height: 230px;
         box-shadow: 0 6px 22px var(--shadow); display: flex; flex-direction: column;
     }
     .play-num {font-weight: 800; font-size: 1.7rem; color: var(--c); line-height: 1;}
@@ -133,6 +149,11 @@ if "history" not in st.session_state:
     st.session_state.history = []
 if "cards" not in st.session_state:
     st.session_state.cards = {}
+if "cid" not in st.session_state:
+    st.session_state.cid = uuid.uuid4().hex[:12]
+
+# Every visitor gets a private index, so uploaded PDFs are never shared.
+collection = get_collection(f"pdf_docs_{st.session_state.cid}")
 
 left, right = st.columns([1, 2], gap="large")
 
@@ -148,9 +169,9 @@ with left:
             else:
                 with st.spinner("Indexing..."):
                     for f in uploaded:
-                        n = ingest_pdf(f, f.name)
+                        n = ingest_pdf(f, f.name, collection)
                         st.success(f"{f.name}: {n} chunks")
-        metas = get_collection().get(include=["metadatas"])["metadatas"]
+        metas = collection.get(include=["metadatas"])["metadatas"]
         names = sorted({m["source"] for m in metas})
         st.markdown(
             '<div class="card-title" style="margin-top:1rem">📚 Indexed documents</div>',
@@ -173,9 +194,12 @@ with right:
             )
             asked = st.form_submit_button("Ask")
     if asked and question.strip():
-        with st.spinner("Thinking..."):
-            result = answer(question.strip())
-        st.session_state.history.append({"question": question.strip(), **result})
+        if not names:
+            st.warning("Upload a PDF and click Process PDF first.")
+        else:
+            with st.spinner("Thinking..."):
+                result = answer(question.strip(), collection=collection)
+            st.session_state.history.append({"question": question.strip(), **result})
 
     if st.session_state.history:
         latest = st.session_state.history[-1]
@@ -220,7 +244,7 @@ with st.container(border=True):
         if summarize_clicked:
             with st.spinner("Reading the document and building cards..."):
                 try:
-                    st.session_state.cards[doc] = summarize_document(doc)
+                    st.session_state.cards[doc] = summarize_document(doc, collection)
                 except Exception as e:
                     st.error(f"Could not build the cards: {e}")
     else:
@@ -229,18 +253,18 @@ with st.container(border=True):
 
 cards = st.session_state.cards.get(doc) if doc else None
 if cards:
-    cols = st.columns(3, gap="medium")
+    items = []
     for i, c in enumerate(cards):
-        pages = f'<div class="play-pages">Pages {clean(c["pages"])}</div>' if c["pages"] else ""
-        with cols[i % 3]:
-            st.markdown(
-                f'<div class="play-card" style="--c:{CARD_COLORS[i % len(CARD_COLORS)]}">'
-                f'<div class="play-num">{i + 1:02d}</div>'
-                f'<div class="play-title">{clean(c["heading"])}</div>'
-                f'<div class="play-text">{clean(c["summary"])}</div>'
-                f"{pages}</div>",
-                unsafe_allow_html=True,
-            )
+        label = page_label(c["pages"])
+        pages = f'<div class="play-pages">{clean(label)}</div>' if label else ""
+        items.append(
+            f'<div class="play-card" style="--c:{CARD_COLORS[i % len(CARD_COLORS)]}">'
+            f'<div class="play-num">{i + 1:02d}</div>'
+            f'<div class="play-title">{clean(c["heading"])}</div>'
+            f'<div class="play-text">{clean(c["summary"])}</div>'
+            f"{pages}</div>"
+        )
+    st.markdown(f'<div class="play-grid">{"".join(items)}</div>', unsafe_allow_html=True)
 
 st.markdown(
     f'<div class="footer">Built by Asad Ehsan · <a href="{REPO_URL}" target="_blank">View source on GitHub</a></div>',

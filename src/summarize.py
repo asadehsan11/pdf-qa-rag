@@ -9,11 +9,11 @@ OVERLAP = 150  # must match the chunk overlap used in src/ingest.py
 MAX_CHARS = 60000
 
 
-def get_document_text(name):
+def get_document_text(name, collection=None):
     """Rebuild the text of one indexed PDF, with [Page N] markers."""
-    data = get_collection().get(
-        where={"source": name}, include=["documents", "metadatas"]
-    )
+    if collection is None:
+        collection = get_collection()
+    data = collection.get(where={"source": name}, include=["documents", "metadatas"])
     pages = {}
     for chunk_id, doc, meta in zip(data["ids"], data["documents"], data["metadatas"]):
         index = int(chunk_id.rsplit("-c", 1)[1])
@@ -54,9 +54,9 @@ def _parse_cards(raw):
     return cards or None
 
 
-def summarize_document(name):
+def summarize_document(name, collection=None):
     """Return a list of {heading, summary, pages} cards for one PDF."""
-    text = get_document_text(name)
+    text = get_document_text(name, collection)
     prompt = (
         "Split the document below into 6 to 10 logical sections. For each section "
         "give: a short heading (max 8 words), a summary of exactly 2 short lines "

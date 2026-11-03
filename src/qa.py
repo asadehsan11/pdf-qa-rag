@@ -6,19 +6,21 @@ from src.ingest import get_collection
 from src.llm import generate
 
 
-def retrieve(question, k=5):
+def retrieve(question, k=5, collection=None):
     """Find the k chunks most similar to the question."""
-    result = get_collection().query(query_texts=[question], n_results=k)
+    if collection is None:
+        collection = get_collection()
+    result = collection.query(query_texts=[question], n_results=k)
     return [
         {"text": doc, "source": meta["source"], "page": meta["page"]}
         for doc, meta in zip(result["documents"][0], result["metadatas"][0])
     ]
 
 
-def answer(question, k=5):
+def answer(question, k=5, collection=None):
     """Answer a question using only the retrieved chunks, and log it."""
     start = time.time()
-    chunks = retrieve(question, k)
+    chunks = retrieve(question, k, collection)
     context = "\n\n".join(
         f"[{i}] ({c['source']}, page {c['page']})\n{c['text']}"
         for i, c in enumerate(chunks, start=1)

@@ -9,10 +9,10 @@ DB_DIR = "data/chroma_db"
 COLLECTION = "pdf_docs"
 
 
-def get_collection():
-    """Open (or create) the ChromaDB collection."""
+def get_collection(name=COLLECTION):
+    """Open (or create) a ChromaDB collection by name."""
     client = chromadb.PersistentClient(path=DB_DIR)
-    return client.get_or_create_collection(COLLECTION)
+    return client.get_or_create_collection(name)
 
 
 def chunk_text(text, size=800, overlap=150):
@@ -26,7 +26,8 @@ def chunk_text(text, size=800, overlap=150):
 
 def ingest_pdf(file, name, collection=None):
     """Ingest one PDF (a path or file-like object). Returns number of chunks."""
-    collection = collection or get_collection()
+    if collection is None:
+        collection = get_collection()
     reader = PdfReader(file)
     total = 0
     for page_no, page in enumerate(reader.pages, start=1):
