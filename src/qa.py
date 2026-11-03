@@ -1,6 +1,9 @@
 """Answer questions from the ingested PDFs, with citations."""
+import time
+
 import chromadb
 
+from src.db import log_qa
 from src.llm import generate
 
 DB_DIR = "data/chroma_db"
@@ -19,7 +22,8 @@ def retrieve(question, k=5):
 
 
 def answer(question, k=5):
-    """Answer a question using only the retrieved chunks."""
+    """Answer a question using only the retrieved chunks, and log it."""
+    start = time.time()
     chunks = retrieve(question, k)
     context = "\n\n".join(
         f"[{i}] ({c['source']}, page {c['page']})\n{c['text']}"
@@ -31,7 +35,14 @@ def answer(question, k=5):
         "If the answer is not in the context, say you don't know.\n\n"
         f"Context:\n{context}\n\nQuestion: {question}\nAnswer:"
     )
-    return {"answer": generate(prompt), "sources": chunks}
+    text = generate(prompt)
+    log_qa(
+        question,
+        text,
+        [{"source": c["source"], "page": c["page"]} for c in chunks],
+        round(time.time() - start, 2),
+    )
+    return {"answer": text, "sources": chunks}
 
 
 if __name__ == "__main__":
