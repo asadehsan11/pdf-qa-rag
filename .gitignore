@@ -24,3 +24,4 @@ data/raw/
 data/chroma_db/
 *.db
 .agents/
+reports/ragas_answers.json

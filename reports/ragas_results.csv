@@ -1,0 +1,9 @@
+question,faithfulness,answer_relevancy
+What is Wireshark used for?,1.0,0.8533791119020511
+What is the difference between capture filters and display filters in Wireshark?,1.0,0.8663762798505241
+What is virtualization?,1.0,1.0000000000000002
+What is the difference between Type-1 and Type-2 hypervisors?,1.0,1.0
+What is a snapshot used for in a virtual machine?,1.0,0.9271526294794263
+Define histogram.,1.0,0.7260257377644977
+How are images represented as arrays of pixel values in NumPy?,1.0,0.8718368440729637
+What is the Normal Equation used for in the regression lab?,1.0,0.7266718122506521
