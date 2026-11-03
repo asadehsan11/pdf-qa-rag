@@ -8,10 +8,10 @@ from google import genai
 load_dotenv()
 
 MODELS = [
-    "gemini-3.8-flash",
     "gemini-flash-lite-latest",
-    "gemini-3.5-flash",
     "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
 ]
 
 from google.genai import types
@@ -22,7 +22,7 @@ _client = genai.Client(
 )
 
 
-def generate(prompt: str, retries: int = 2) -> str:
+def generate(prompt: str, retries: int = 1) -> str:
     """Try each model in order; retry briefly on temporary errors."""
     last_error = None
     for model in MODELS:
