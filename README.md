@@ -61,7 +61,7 @@ python run_ragas.py
 ```
 
 ## Results
-Scored with RAGAS on 8 questions about 3 lab manuals (cybersecurity, digital image processing, machine learning). Full per-question scores are in `reports/ragas_results.csv`.
+Scored with RAGAS on 8 questions over 6 indexed lab manuals (cybersecurity, digital image processing, machine learning). Full per-question scores are in `reports/ragas_results.csv`.
 
 | Metric | Average |
 |--------|---------|
