@@ -16,11 +16,23 @@ MODELS = [
 
 from google.genai import types
 
+def _get_api_key():
+    """Read the key from .env locally, or from Streamlit Secrets when deployed."""
+    key = os.getenv("GEMINI_API_KEY")
+    if key:
+        return key
+    try:
+        import streamlit as st
+
+        return st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        return None
+
+
 _client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY"),
+    api_key=_get_api_key(),
     http_options=types.HttpOptions(timeout=20000),
 )
-
 
 def generate(prompt: str, retries: int = 1) -> str:
     """Try each model in order; retry briefly on temporary errors."""
