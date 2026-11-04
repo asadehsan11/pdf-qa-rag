@@ -238,7 +238,7 @@ with st.container(border=True):
     if names:
         pick_col, btn_col = st.columns([3, 1], gap="medium")
         with pick_col:
-            doc = st.selectbox("Document", names, label_visibility="collapsed")
+            doc = st.radio("Document", names, horizontal=True, label_visibility="collapsed")
         with btn_col:
             summarize_clicked = st.button("Summarize as cards", use_container_width=True)
         if summarize_clicked:
