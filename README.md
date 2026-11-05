@@ -4,6 +4,8 @@ Ask questions about your own PDFs and get answers with page-level citations. Bui
 
 **Live demo:** https://askmypdf-asad.streamlit.app
 
+**Video demo (2 min):** https://youtu.be/P1oIzgy3HuQ
+
 ![Question answering with citations](reports/demo.PNG)
 
 ## Features
